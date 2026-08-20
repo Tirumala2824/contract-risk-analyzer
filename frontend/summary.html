@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Executive Summary | Contract Risk Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <style>
+        .summary-page {
+            padding-top: 100px;
+            padding-bottom: var(--space-12);
+            min-height: 100vh;
+        }
+
+        .summary-card {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-10);
+            box-shadow: var(--shadow-lg);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .grade-display {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: var(--font-weight-bold);
+            margin: 0 auto var(--space-6);
+        }
+
+        .grade-display.low {
+            background: var(--color-success-subtle);
+            color: var(--color-success);
+            border: 4px solid var(--color-success);
+        }
+
+        .grade-display.medium {
+            background: var(--color-warning-subtle);
+            color: var(--color-warning);
+            border: 4px solid var(--color-warning);
+        }
+
+        .grade-display.high {
+            background: rgba(249, 115, 22, 0.1);
+            color: #F97316;
+            border: 4px solid #F97316;
+        }
+
+        .grade-display.critical {
+            background: var(--color-danger-subtle);
+            color: var(--color-danger);
+            border: 4px solid var(--color-danger);
+        }
+
+        .risk-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-3) 0;
+            border-bottom: 1px solid var(--color-border-light);
+        }
+
+        .risk-item:last-child {
+            border-bottom: none;
+        }
+
+        .recommendation-item {
+            display: flex;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-3) 0;
+        }
+
+        .print-btn {
+            position: fixed;
+            bottom: var(--space-6);
+            right: var(--space-6);
+        }
+
+        @media print {
+
+            .navbar,
+            .print-btn {
+                display: none !important;
+            }
+
+            .summary-page {
+                padding-top: 0;
+            }
+
+            .summary-card {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check"></i>
+                <span>Contract Risk Analyzer</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Analysis</a>
+                <a id="resultsLink" href="#" class="btn btn-primary btn-sm"><i class="bi bi-bar-chart me-1"></i>Full
+                    Results</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container summary-page">
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-3">Loading executive summary...</p>
+        </div>
+
+        <div id="summaryContent" class="d-none">
+            <div class="summary-card">
+                <div class="text-center mb-5">
+                    <span class="badge bg-primary mb-3">Executive Summary</span>
+                    <h1 class="mb-2" id="documentName">Contract Risk Assessment</h1>
+                    <p class="text-muted" id="analysisDate">--</p>
+                </div>
+
+                <!-- Grade Display -->
+                <div class="grade-display" id="gradeDisplay">A</div>
+
+                <div class="text-center mb-5">
+                    <h3 id="scoreDisplay">Overall Score: --</h3>
+                    <p class="text-muted mb-0">Risk Level: <strong id="levelDisplay">--</strong></p>
+                </div>
+
+                <!-- Summary Text -->
+                <div class="mb-5 p-4 rounded-3" style="background: var(--color-bg-tertiary);">
+                    <h5 class="mb-3"><i class="bi bi-file-text me-2 text-primary"></i>Assessment Summary</h5>
+                    <p id="summaryText" class="mb-0">--</p>
+                </div>
+
+                <!-- Key Risks -->
+                <div class="mb-5">
+                    <h5 class="mb-3"><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Key Risks Identified
+                    </h5>
+                    <div id="keyRisks">
+                        <p class="text-muted">No significant risks identified.</p>
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div>
+                    <h5 class="mb-3"><i class="bi bi-lightbulb me-2 text-success"></i>Recommendations</h5>
+                    <div id="recommendations">
+                        <p class="text-muted">No recommendations at this time.</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-3 justify-content-center mt-5 pt-4 border-top">
+                    <button class="btn btn-outline-primary" onclick="window.print()">
+                        <i class="bi bi-printer me-2"></i>Print Report
+                    </button>
+                    <a id="resultsLinkFooter" href="#" class="btn btn-primary">
+                        <i class="bi bi-arrow-right me-2"></i>View Full Results
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-primary btn-lg rounded-circle print-btn" onclick="window.print()" title="Print Report">
+        <i class="bi bi-printer"></i>
+    </button>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/js/app.js"></script>
+    <script>
+        window.renderSummaryData = function (data) {
+            const content = document.getElementById('summaryContent');
+            const loading = document.getElementById('loadingState');
+
+            loading.classList.add('d-none');
+            content.classList.remove('d-none');
+
+            const analysisId = window.location.pathname.split('/').pop();
+            document.getElementById('resultsLink').href = `/results/${analysisId}`;
+            document.getElementById('resultsLinkFooter').href = `/results/${analysisId}`;
+
+            // Document Info
+            document.getElementById('documentName').textContent = data.document_name || 'Contract Risk Assessment';
+            document.getElementById('analysisDate').textContent = `Generated on ${new Date().toLocaleDateString()}`;
+
+            // Score & Level
+            const score = Math.round(data.overall_score || 0);
+            const level = data.overall_level || 'low';
+
+            document.getElementById('scoreDisplay').textContent = `Overall Score: ${score}/100`;
+            document.getElementById('levelDisplay').textContent = level.toUpperCase();
+
+            // Grade
+            const gradeDisplay = document.getElementById('gradeDisplay');
+            let grade = 'A';
+            if (score >= 80) grade = 'F';
+            else if (score >= 60) grade = 'D';
+            else if (score >= 40) grade = 'C';
+            else if (score >= 20) grade = 'B';
+
+            gradeDisplay.textContent = grade;
+            gradeDisplay.className = `grade-display ${level}`;
+
+            // Summary
+            document.getElementById('summaryText').textContent = data.summary || data.executive_summary || 'Analysis complete. Review the detailed findings for more information.';
+
+            // Key Risks
+            const risksContainer = document.getElementById('keyRisks');
+            const keyRisks = data.key_risks || [];
+            if (keyRisks.length > 0) {
+                risksContainer.innerHTML = keyRisks.map(risk => `
+                    <div class="risk-item">
+                        <i class="bi bi-exclamation-circle text-danger"></i>
+                        <span>${risk}</span>
+                    </div>
+                `).join('');
+            } else {
+                risksContainer.innerHTML = '<p class="text-muted">No significant risks identified.</p>';
+            }
+
+            // Recommendations
+            const recsContainer = document.getElementById('recommendations');
+            const recommendations = data.recommendations || [];
+            if (recommendations.length > 0) {
+                recsContainer.innerHTML = recommendations.map(rec => `
+                    <div class="recommendation-item">
+                        <i class="bi bi-check-circle text-success"></i>
+                        <span>${rec}</span>
+                    </div>
+                `).join('');
+            } else {
+                recsContainer.innerHTML = '<p class="text-muted">No recommendations at this time.</p>';
+            }
+        };
+    </script>
+</body>
+
+</html>

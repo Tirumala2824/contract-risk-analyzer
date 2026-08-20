@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Results | Contract Risk Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+    <style>
+        .results-page {
+            padding-top: 100px;
+            padding-bottom: var(--space-12);
+            min-height: 100vh;
+        }
+
+        .results-header {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-xl);
+            padding: var(--space-8);
+            margin-bottom: var(--space-8);
+            box-shadow: var(--shadow-card);
+        }
+
+        .overall-score-card {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            color: white;
+            text-align: center;
+        }
+
+        .overall-score-value {
+            font-size: 3.5rem;
+            font-weight: var(--font-weight-bold);
+            line-height: 1;
+        }
+
+        .chart-container {
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            padding: var(--space-6);
+            box-shadow: var(--shadow-card);
+            margin-bottom: var(--space-8);
+        }
+
+        .score-circle {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: var(--font-weight-bold);
+            font-size: var(--font-size-lg);
+        }
+
+        .score-circle.low {
+            background: var(--color-success-subtle);
+            color: var(--color-success);
+            border: 2px solid var(--color-success);
+        }
+
+        .score-circle.medium {
+            background: var(--color-warning-subtle);
+            color: var(--color-warning);
+            border: 2px solid var(--color-warning);
+        }
+
+        .score-circle.high {
+            background: rgba(249, 115, 22, 0.1);
+            color: #F97316;
+            border: 2px solid #F97316;
+        }
+
+        .score-circle.critical {
+            background: var(--color-danger-subtle);
+            color: var(--color-danger);
+            border: 2px solid var(--color-danger);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check"></i>
+                <span>Contract Risk Analyzer</span>
+            </a>
+            <div class="d-flex gap-2">
+                <a href="/" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Analysis</a>
+                <a id="summaryLink" href="#" class="btn btn-primary btn-sm"><i
+                        class="bi bi-file-text me-1"></i>Executive Summary</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container results-page">
+        <!-- Header Section -->
+        <div class="results-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <span class="badge bg-success mb-2"><i class="bi bi-check-circle me-1"></i>Analysis Complete</span>
+                    <h1 class="mb-2" id="documentName">Contract Analysis Results</h1>
+                    <p class="text-muted mb-0" id="analysisInfo">Loading...</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="overall-score-card">
+                        <div class="text-uppercase small mb-1" style="opacity: 0.8;">Overall Risk Score</div>
+                        <div class="overall-score-value" id="overallScore">--</div>
+                        <div class="mt-2">
+                            <span class="badge bg-white text-dark" id="overallBadge">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="text-center py-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="text-muted mt-3">Loading risk analysis...</p>
+        </div>
+
+        <div id="resultsContent" class="d-none">
+            <!-- Radar Chart -->
+            <div class="chart-container">
+                <h5 class="text-center mb-4">Risk Domain Profile</h5>
+                <div style="position: relative; height: 350px; max-width: 600px; margin: 0 auto;">
+                    <canvas id="riskRadarChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Domain Tabs -->
+            <div class="domain-tabs" id="domainTabs"></div>
+
+            <!-- Findings View -->
+            <div class="findings-container" id="findingsView">
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-arrow-up-circle fs-2 d-block mb-3"></i>
+                    Select a risk domain above to view detailed findings
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="/js/app.js"></script>
+    <script>
+        const domainIcons = {
+            legal: 'bi-scale',
+            compliance: 'bi-clipboard-check',
+            financial: 'bi-currency-dollar',
+            operational: 'bi-gear-wide-connected',
+            security: 'bi-shield-lock',
+            fraud: 'bi-exclamation-triangle'
+        };
+
+        const domainNames = {
+            legal: 'Legal Risk',
+            compliance: 'Compliance',
+            financial: 'Financial',
+            operational: 'Operational',
+            security: 'Security',
+            fraud: 'Fraud'
+        };
+
+        let riskChart = null;
+        let currentAnalysisData = null;
+
+        window.renderResultsData = function (data) {
+            currentAnalysisData = data;
+            const content = document.getElementById('resultsContent');
+            const loading = document.getElementById('loadingState');
+
+            loading.classList.add('d-none');
+            content.classList.remove('d-none');
+
+            // Header Info
+            document.getElementById('documentName').textContent = data.document_name || 'Contract Analysis';
+            document.getElementById('analysisInfo').textContent = `Analyzed on ${new Date(data.created_at).toLocaleDateString()}`;
+            document.getElementById('overallScore').textContent = Math.round(data.overall_score);
+
+            const badge = document.getElementById('overallBadge');
+            badge.textContent = (data.overall_level || 'low').toUpperCase();
+
+            const analysisId = window.location.pathname.split('/').pop();
+            document.getElementById('summaryLink').href = `/summary/${analysisId}`;
+
+            // Radar Chart
+            renderRadarChart(data.risk_scores);
+
+            // Tabs
+            renderTabs(data.risk_scores);
+
+            // Default to first tab
+            const firstDomain = Object.keys(data.risk_scores)[0];
+            if (firstDomain) selectTab(firstDomain);
+        };
+
+        function renderRadarChart(scores) {
+            const ctx = document.getElementById('riskRadarChart').getContext('2d');
+            const labels = Object.keys(scores).map(d => domainNames[d] || d);
+            const dataValues = Object.values(scores).map(s => s.domain_score);
+
+            if (riskChart) riskChart.destroy();
+
+            riskChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Risk Score',
+                        data: dataValues,
+                        backgroundColor: 'rgba(0, 112, 188, 0.15)',
+                        borderColor: '#0070BC',
+                        pointBackgroundColor: '#0070BC',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#0070BC',
+                        borderWidth: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(0, 0, 0, 0.1)' },
+                            grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                            pointLabels: {
+                                color: '#475569',
+                                font: { size: 12, family: 'Inter' }
+                            },
+                            ticks: { display: false },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function renderTabs(scores) {
+            const container = document.getElementById('domainTabs');
+            container.innerHTML = '';
+
+            Object.entries(scores).forEach(([domain, result]) => {
+                const icon = domainIcons[domain] || 'bi-circle';
+                const name = domainNames[domain] || domain;
+                const score = Math.round(result.domain_score);
+                const level = result.domain_level;
+
+                const tab = document.createElement('div');
+                tab.className = 'domain-tab';
+                tab.onclick = () => selectTab(domain);
+                tab.id = `tab-${domain}`;
+
+                tab.innerHTML = `
+                    <div class="d-flex align-items-center">
+                        <i class="bi ${icon} tab-icon"></i>
+                        <div>
+                            <div class="small text-muted">${name}</div>
+                            <div class="fw-semibold">${level.toUpperCase()}</div>
+                        </div>
+                    </div>
+                    <div class="tab-score risk-${level}">${score}</div>
+                `;
+                container.appendChild(tab);
+            });
+        }
+
+        function getJudgeBar(score) {
+            // Helper to create a small bar for judge score
+            const width = score + '%';
+            let color = 'bg-success';
+            if (score > 40) color = 'bg-warning';
+            if (score > 70) color = 'bg-danger';
+
+            return `<div class="progress" style="height: 6px; width: 60px; background-color: #e9ecef;">
+                        <div class="progress-bar ${color}" role="progressbar" style="width: ${width}"></div>
+                    </div>`;
+        }
+
+        function selectTab(domain) {
+            document.querySelectorAll('.domain-tab').forEach(t => t.classList.remove('active'));
+            const activeTab = document.getElementById(`tab-${domain}`);
+            if (activeTab) activeTab.classList.add('active');
+
+            const result = currentAnalysisData.risk_scores[domain];
+            const name = domainNames[domain] || domain;
+            const container = document.getElementById('findingsView');
+
+            if (!result) return;
+
+            // Judge Breakdown (Safely handle if missing)
+            const judges = result.judge_scores || { rule_score: 0, template_score: 0, bayes_score: 0, llm_score: 0 };
+            const confidence = result.confidence_score !== undefined ? Math.round(result.confidence_score * 100) : '--';
+
+            let confClass = 'text-danger';
+            if (confidence > 40) confClass = 'text-warning';
+            if (confidence > 70) confClass = 'text-success';
+
+            container.innerHTML = `
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <h4 class="mb-1">${name} Findings</h4>
+                         <div class="d-flex gap-3 small text-muted">
+                            <div><i class="bi bi-shield me-1"></i>Confidence: <strong class="${confClass}">${confidence}%</strong></div>
+                            <div><i class="bi bi-activity me-1"></i>Action: <strong>${(result.risk_action || 'Review').toUpperCase().replace('_', ' ')}</strong></div>
+                         </div>
+                    </div>
+                    <span class="badge-risk ${result.domain_level}" style="font-size: 1rem; padding: 0.5rem 1rem;">${result.domain_level.toUpperCase()} Risk</span>
+                </div>
+
+                <!-- Consensus Widget -->
+                <div class="card mb-4 bg-light border-0">
+                    <div class="card-body py-3">
+                        <h6 class="card-title small text-uppercase text-muted mb-3">Multi-Model Consensus</h6>
+                        <div class="row g-3 text-center">
+                            <div class="col-3 border-end">
+                                <div class="small fw-bold">Rule Based</div>
+                                <div class="h5 mb-1">${Math.round(judges.rule_score)}</div>
+                                <div class="d-flex justify-content-center">${getJudgeBar(judges.rule_score)}</div>
+                            </div>
+                            <div class="col-3 border-end">
+                                <div class="small fw-bold">Template Diff</div>
+                                <div class="h5 mb-1">${Math.round(judges.template_score)}</div>
+                                <div class="d-flex justify-content-center">${getJudgeBar(judges.template_score)}</div>
+                            </div>
+                            <div class="col-3 border-end">
+                                <div class="small fw-bold">Bayesian</div>
+                                <div class="h5 mb-1">${Math.round(judges.bayes_score)}</div>
+                                <div class="d-flex justify-content-center">${getJudgeBar(judges.bayes_score)}</div>
+                            </div>
+                            <div class="col-3">
+                                <div class="small fw-bold">LLM Reasoner</div>
+                                <div class="h5 mb-1">${Math.round(judges.llm_score)}</div>
+                                <div class="d-flex justify-content-center">${getJudgeBar(judges.llm_score)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-muted mb-4">${result.summary || 'No summary available.'}</p>
+                
+                <table class="findings-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 25%">Parameter & Base Data</th>
+                            <th style="width: 50%">Finding & Evidence</th>
+                            <th style="width: 10%">Score</th>
+                            <th style="width: 15%">Impact</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${(result.findings || []).map(f => {
+                // Format metadata for display
+                const metaHtml = f.metadata && Object.keys(f.metadata).length > 0 ?
+                    `<div class="mt-2 pt-2 border-top small text-muted font-monospace" style="font-size: 0.75rem;">
+                                    ${Object.entries(f.metadata).map(([k, v]) => `<div>${k}: <b>${v}</b></div>`).join('')}
+                                 </div>` : '';
+
+                return `
+                            <tr>
+                                <td>
+                                    <div class="finding-param fw-semibold">${f.parameter}</div>
+                                    ${metaHtml}
+                                </td>
+                                <td>
+                                    <div class="mb-2">${f.finding}</div>
+                                    ${f.evidence ? `<div class="evidence-box">"${f.evidence}"</div>` : ''}
+                                    <div class="explanation-box mt-2">
+                                        <i class="bi bi-info-circle me-2"></i>${f.explanation}
+                                        ${f.recommendation ? `<div class="mt-2 pt-2 border-top text-success small"><i class="bi bi-check-circle me-1"></i>${f.recommendation}</div>` : ''}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="score-badge">${f.score}</span>
+                                </td>
+                                <td>
+                                    <span class="badge-risk ${f.risk_level}">${f.risk_level}</span>
+                                </td>
+                            </tr>
+                        `}).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+    </script>
+</body>
+
+</html>

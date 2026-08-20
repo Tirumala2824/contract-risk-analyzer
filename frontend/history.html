@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis History | Contract Risk Analyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check"></i>
+                <span>Contract Risk Analyzer</span>
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="/" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>New Analysis</a>
+                <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                    <i class="bi bi-moon-stars"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container" style="padding-top: 100px; padding-bottom: 3rem; min-height: 100vh;">
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="mb-2">Analysis History</h1>
+                <p class="text-muted">View all previous contract risk analyses</p>
+            </div>
+        </div>
+
+        <div class="card" id="historyContent">
+            <div class="card-body text-center py-5">
+                <div class="loading-spinner mx-auto mb-3"></div>
+                <p class="text-muted">Loading history...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module">
+        import { ThemeManager } from '/js/modules/ui.js';
+        new ThemeManager();
+    </script>
+    <script>
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/analysis');
+                if (!response.ok) throw new Error('Failed to load');
+                const data = await response.json();
+                renderHistory(data.analyses || []);
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('historyContent').innerHTML = `
+                    <div class="card-body empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-exclamation-circle"></i></div>
+                        <div class="empty-state-title">Error Loading History</div>
+                        <p class="empty-state-description">Please try again later.</p>
+                    </div>`;
+            }
+        }
+
+        function renderHistory(analyses) {
+            const container = document.getElementById('historyContent');
+
+            if (analyses.length === 0) {
+                container.innerHTML = `
+                    <div class="card-body empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-folder2-open"></i></div>
+                        <div class="empty-state-title">No Analyses Yet</div>
+                        <p class="empty-state-description">Upload a contract to get started with your first risk analysis.</p>
+                        <a href="/" class="btn btn-primary"><i class="bi bi-upload me-2"></i>Upload Contract</a>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = `
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="padding: var(--space-4); font-size: var(--font-size-xs); text-transform: uppercase; color: var(--color-text-muted);">Document</th>
+                                <th style="padding: var(--space-4); font-size: var(--font-size-xs); text-transform: uppercase; color: var(--color-text-muted);">Status</th>
+                                <th style="padding: var(--space-4); font-size: var(--font-size-xs); text-transform: uppercase; color: var(--color-text-muted);">Risk Score</th>
+                                <th style="padding: var(--space-4); font-size: var(--font-size-xs); text-transform: uppercase; color: var(--color-text-muted);">Analyzed</th>
+                                <th style="padding: var(--space-4); font-size: var(--font-size-xs); text-transform: uppercase; color: var(--color-text-muted);">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${analyses.map(a => `
+                                <tr class="animate-fade-in">
+                                    <td style="padding: var(--space-4); vertical-align: middle;">
+                                        <i class="bi bi-file-earmark-text me-2 text-primary"></i>
+                                        <strong>${a.document_name || 'Unknown'}</strong>
+                                    </td>
+                                    <td style="padding: var(--space-4); vertical-align: middle;">
+                                        <span class="badge ${a.status === 'completed' ? 'bg-success' : a.status === 'failed' ? 'bg-danger' : 'bg-warning'}">
+                                            ${a.status.replace('_', ' ')}
+                                        </span>
+                                    </td>
+                                    <td style="padding: var(--space-4); vertical-align: middle;">
+                                        ${a.overall_score !== null && a.overall_score !== undefined ? `
+                                            <span class="fw-semibold">${Math.round(a.overall_score)}/100</span>
+                                            <span class="badge-risk ${a.overall_level} ms-2">${a.overall_level}</span>
+                                        ` : '<span class="text-muted">—</span>'}
+                                    </td>
+                                    <td style="padding: var(--space-4); vertical-align: middle;" class="text-muted">
+                                        ${new Date(a.created_at).toLocaleString()}
+                                    </td>
+                                    <td style="padding: var(--space-4); vertical-align: middle;">
+                                        ${a.status === 'completed' ? `
+                                            <a href="/results/${a.id}" class="btn btn-sm btn-outline-primary me-1" data-tooltip="View Results">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="/summary/${a.id}" class="btn btn-sm btn-outline-success" data-tooltip="View Summary">
+                                                <i class="bi bi-file-text"></i>
+                                            </a>
+                                        ` : a.status === 'in_progress' || a.status === 'pending' ? `
+                                            <a href="/status/${a.id}" class="btn btn-sm btn-outline-warning" data-tooltip="View Progress">
+                                                <i class="bi bi-hourglass-split"></i>
+                                            </a>
+                                        ` : ''}
+                                    </td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', loadHistory);
+    </script>
+</body>
+
+</html>

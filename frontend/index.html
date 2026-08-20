@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contract Risk Analyzer | AI-Powered Risk Assessment</title>
+    <meta name="description" content="Enterprise-grade AI contract risk analysis platform with multi-agent assessment">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-shield-check"></i>
+                <span>Contract Risk Analyzer</span>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/"><i class="bi bi-upload me-1"></i> Upload</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/history"><i class="bi bi-clock-history me-1"></i> History</a>
+                    </li>
+                    <li class="nav-item ms-3">
+                        <button class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                            <i class="bi bi-moon-stars"></i>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero-section">
+        <div class="container">
+            <div class="row align-items-center g-5">
+                <div class="col-lg-6">
+                    <span class="badge bg-primary mb-3">AI-Powered Analysis</span>
+                    <h1 class="display-5 fw-bold mb-4">
+                        <span class="text-gradient">Intelligent</span> Contract<br>Risk Assessment
+                    </h1>
+                    <p class="lead mb-4" style="color: var(--color-text-secondary);">
+                        Upload your contracts and receive comprehensive, explainable risk assessments
+                        powered by multi-agent AI technology. Analyze legal, compliance, financial,
+                        operational, security, and fraud risks automatically.
+                    </p>
+                    <div class="d-flex gap-3 flex-wrap">
+                        <div class="feature-badge">
+                            <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
+                        </div>
+                        <div class="feature-badge">
+                            <i class="bi bi-file-earmark-word text-primary"></i> DOCX
+                        </div>
+                        <div class="feature-badge">
+                            <i class="bi bi-file-earmark-excel text-success"></i> XLSX
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="upload-card">
+                        <!-- Step 1: Analysis Mode -->
+                        <div class="mb-4">
+                            <label class="form-label">1. Analysis Mode</label>
+                            <div class="btn-group w-100" role="group">
+                                <input type="radio" class="btn-check" name="analysisMode" id="modePre"
+                                    value="pre_signed" checked>
+                                <label class="btn btn-outline-primary" for="modePre">
+                                    <i class="bi bi-file-earmark-text me-2"></i>Pre-Signed
+                                </label>
+                                <input type="radio" class="btn-check" name="analysisMode" id="modePost"
+                                    value="post_signed">
+                                <label class="btn btn-outline-primary" for="modePost">
+                                    <i class="bi bi-file-check me-2"></i>Post-Signed
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Reference Document -->
+                        <div class="mb-4">
+                            <label class="form-label">2. Reference Contract (Optional)</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-journal-check"></i></span>
+                                <input type="file" class="form-control" id="referenceInput" accept=".pdf,.docx,.xlsx">
+                                <button class="btn btn-outline-secondary" type="button" id="clearRefBtn">Clear</button>
+                            </div>
+                            <div class="form-text">Upload a template or standard contract for comparison.</div>
+                        </div>
+
+                        <!-- Step 3: Upload Area -->
+                        <label class="form-label">3. Upload Contract to Analyze</label>
+                        <div class="upload-area" id="uploadArea">
+                            <div class="upload-icon">
+                                <i class="bi bi-cloud-arrow-up"></i>
+                            </div>
+                            <h5>Drop your contract here</h5>
+                            <p class="text-muted mb-3">or click to browse files</p>
+                            <input type="file" id="fileInput" accept=".pdf,.docx,.xlsx" hidden>
+                            <button class="btn btn-primary btn-lg" id="browseBtn">
+                                <i class="bi bi-folder2-open me-2"></i>Browse Files
+                            </button>
+                            <p class="text-muted mt-3 mb-0" style="font-size: var(--font-size-sm);">
+                                Supported: PDF, DOCX, XLSX (Max 50MB)
+                            </p>
+                        </div>
+
+                        <!-- File Preview -->
+                        <div class="file-preview d-none" id="filePreview">
+                            <div class="d-flex align-items-center">
+                                <div class="file-icon" id="fileIcon">
+                                    <i class="bi bi-file-earmark"></i>
+                                </div>
+                                <div class="flex-grow-1 ms-3">
+                                    <h6 class="mb-0" id="fileName">document.pdf</h6>
+                                    <small class="text-muted" id="fileSize">2.5 MB</small>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm" id="clearBtn">
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Upload Progress -->
+                        <div class="d-none mt-4" id="uploadProgress">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="fw-medium">Uploading & Analyzing...</span>
+                                <span id="progressPercent">0%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" id="progressBar"
+                                    style="width: 0%"></div>
+                            </div>
+                            <p class="text-muted mt-2 mb-0" style="font-size: var(--font-size-sm);" id="progressStatus">
+                                Preparing upload...</p>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-4 d-none" id="uploadActions">
+                            <button class="btn btn-primary btn-lg w-100" id="analyzeBtn">
+                                <i class="bi bi-cpu me-2"></i>Start Analysis
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Risk Domains Section -->
+    <section class="py-5" style="background: var(--color-bg-primary);">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2><span class="text-gradient">6 Risk Domains</span> Analyzed</h2>
+                <p class="text-muted">Comprehensive coverage across all critical areas</p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-scale"></i>
+                        </div>
+                        <h5>Legal & Contractual</h5>
+                        <p class="mb-0">Ambiguous clauses, liability exposure, termination rights, jurisdiction issues
+                        </p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-clipboard-check"></i>
+                        </div>
+                        <h5>Compliance & Regulatory</h5>
+                        <p class="mb-0">GDPR, HIPAA, SOX compliance, policy violations, audit readiness</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-currency-dollar"></i>
+                        </div>
+                        <h5>Financial & Commercial</h5>
+                        <p class="mb-0">Payment terms, penalty clauses, revenue leakage, cost ambiguity</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-gear-wide-connected"></i>
+                        </div>
+                        <h5>Operational & Process</h5>
+                        <p class="mb-0">Role clarity, SLA requirements, dependency risks, control gaps</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-shield-lock"></i>
+                        </div>
+                        <h5>Security & Privacy</h5>
+                        <p class="mb-0">PII exposure, data retention, encryption requirements, breach liability</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="domain-card">
+                        <div class="domain-icon">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <h5>Fraud & Manipulation</h5>
+                        <p class="mb-0">Document tampering, inconsistent values, unusual patterns</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container text-center">
+            <p class="text-muted mb-0">
+                Contract Risk Analyzer &copy; 2026 | Powered by Multi-Agent AI
+            </p>
+        </div>
+    </footer>
+
+    <!-- Error Modal -->
+    <div class="modal fade" id="errorModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title text-danger">
+                        <i class="bi bi-exclamation-circle me-2"></i>Error
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="errorMessage">
+                    An error occurred. Please try again.
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script type="module" src="/js/app.js"></script>
+</body>
+
+</html>
